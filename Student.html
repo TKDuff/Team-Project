@@ -1,0 +1,178 @@
+<html>
+<head>
+	<link rel="stylesheet" href="style.css">
+	<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.16.0/js/md5.min.js"></script>
+
+</head>
+<body>
+
+
+<table border="1" cellpadding="15" id="mytab1">
+    <tbody>
+        <tr>
+            <td>Time</td>
+            <td>Monday</td>
+            <td>Tuesday</td>
+            <td>Wednesday</td>
+            <td>Thursday</td>
+            <td>Friday</td>
+        </tr>
+        <tr>
+            <td>09:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>10:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>11:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>12:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>13:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>14:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>15:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>16:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>17:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+<table border="1" cellpadding="15" id="inputBox">
+    <tbody>
+        <tr>
+            <td>Module</td>
+            <td>Colour</td>
+        </tr>
+        <tr>
+            <td contenteditable ></td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+    </tbody>
+</table>
+
+<!--<button type="button" onclick="readUserData()">Read</button>-->
+
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.12.0/firebase-database.js";
+
+
+    const firebaseConfig = {
+        
+    };
+
+        
+    const app = initializeApp(firebaseConfig);  // Initialize Firebase
+    const database = getDatabase(app);  // Initialize Realtime Database and get a reference to the service
+
+    var inputBox=document.getElementById("inputBox");
+    var table=document.getElementById("mytab1");
+    var moduleColour = "black";
+    var moduleCode;
+    var slotType = "T";
+    var r = document.querySelector(':root');
+    
+
+
+
+    window.readUserData = function (){
+        moduleCode = inputBox.rows[1].cells[0].innerHTML;
+        //r.style.setProperty('--moduleColour', (md5(moduleCode)).substring(1,7));
+        const db = getDatabase();
+        const dbRef = ref(db, moduleCode + '/');
+        onValue(dbRef, (snapshot) => {const data = snapshot.val();
+            const values = Object.entries(data);
+            cleanUserData(values);
+        });
+        
+    }
+
+    window.cleanUserData = function(values) {
+        var current;
+        var column;
+        var row;
+        var type;
+        for(let index = 0; index < values[0][1].length; index++){
+            current = values[0][1][index];
+            row = current.charAt(0);
+            column = current.charAt(2);
+            type = current.substring(4,6);
+            table.rows[row].cells[column].innerHTML = type;
+            table.rows[row].cells[column].classList.toggle("set");
+        }
+    }
+
+    window.setColour = function(element) {
+        var row_index = (element.closest('tr').rowIndex);
+        moduleCode = inputBox.rows[row_index].cells[0].innerHTML;
+        moduleColour = (md5(moduleCode)).substring(1,7);
+        r.style.setProperty('--moduleColour', moduleColour);
+        inputBox.rows[row_index].cells[1].classList.toggle("set");
+        readUserData();
+
+    }
+
+</script>
+ 
+</body>
+</html>
