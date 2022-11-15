@@ -1,0 +1,228 @@
+<html>
+<head>
+	<link rel="stylesheet" href="style.css">
+	<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.16.0/js/md5.min.js"></script>
+
+</head>
+<body>
+
+
+<table border="1" cellpadding="15" id="mytab1">
+    <tbody>
+        <tr>
+            <td>Time</td>
+            <td>Monday</td>
+            <td>Tuesday</td>
+            <td>Wednesday</td>
+            <td>Thursday</td>
+            <td>Friday</td>
+        </tr>
+        <tr>
+            <td>09:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>10:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>11:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>12:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>13:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>14:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>15:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>16:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>17:00</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+<table border="1" cellpadding="15" id="inputBox">
+    <tbody>
+        <tr>
+            <td>Module</td>
+            <td>Colour</td>
+        </tr>
+        <tr>
+            <td contenteditable onkeyup="setColour(this)"></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+
+<table border="1" cellpadding="15" id="slotTable">
+    <tbody>
+        <tr>
+            <td>Duration</td>
+            <td>Symbol</td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td onclick="setType(this)" id="symbol">LE</td>
+        </tr>
+        <tr>
+            <td contenteditable>2</td>
+            <td onclick="setType(this)" id="symbol">LA</td>
+        </tr>
+        <tr>
+            <td >1</td>
+            <td onclick="setType(this)" id="symbol">T </td>
+        </tr>
+    </tbody>
+</table>
+
+<button type="button" onclick="submit()">Submit</button>
+<button type="button" onclick="readUserData()">Read</button>
+
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.12.0/firebase-database.js";
+
+
+    const firebaseConfig = {
+        
+    };
+
+        
+    const app = initializeApp(firebaseConfig);  // Initialize Firebase
+    const database = getDatabase(app);  // Initialize Realtime Database and get a reference to the service
+
+    var inputBox=document.getElementById("inputBox");
+    var slotTable=document.getElementById("slotTable");
+    var moduleColour = "black";
+    var moduleCode;
+    var slotType = "T";
+    var r = document.querySelector(':root');
+    var duration = 1;
+
+
+
+
+
+    window.submit = function(){
+        var table = document.getElementById("mytab1");
+        var current;
+        const values = [];
+        for(var columnIndex = 1; columnIndex < 6; columnIndex++){
+            for(var rowIndex = 1; rowIndex < 9; rowIndex++){
+                current = table.rows[rowIndex].cells[columnIndex]
+                if(current.innerHTML != ""){
+                    values.push(rowIndex + " " + columnIndex + " " + current.innerHTML);
+                }
+            }
+        }
+        for (const color of values){
+            console.log(color);
+        }
+        writeUserData(moduleCode, values);
+    }
+
+    //Highlighter
+    $(function () {
+        $('#mytab1 td').click(function () {
+            if($(this).index() != 0 && $(this).parent().index() != 0 ){
+           $(this).html(slotType).toggleClass("set");
+        }
+        });
+    });
+
+
+    window.setColour = function(element) {
+        moduleCode = element.innerHTML;
+        moduleColour = (md5(moduleCode)).substring(1,7);
+        r.style.setProperty('--moduleColour', moduleColour);
+
+
+        inputBox.rows[1].cells[1].style.backgroundColor = moduleColour;     //Set colour of colour column
+        for(var row_index = 1; row_index < 4; row_index++){                 //Set colour of Symbol column
+            slotTable.rows[row_index].cells[1].style.backgroundColor = moduleColour;
+        }
+    }
+
+    window.setType = function(element) {
+        slotType = element.innerHTML;
+        //var row_index = (element.closest('tr').rowIndex);
+        //duration = slotTable.rows[element.closest('tr').rowIndex].cells[0].innerHTML;
+    }
+
+    function writeUserData(userId, entries) {
+        const db = getDatabase();
+        set(ref(db,userId), {
+            SelectedCells: entries
+        });
+    }
+
+    window.readUserData = function (){
+        const db = getDatabase();
+        const dbRef = ref(db, 'CS130/');
+        onValue(dbRef, (snapshot) => {const data = snapshot.val();
+        console.log(data);
+        });
+    }
+
+
+</script>
+ 
+</body>
+</html>
