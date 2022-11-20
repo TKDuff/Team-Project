@@ -1,15 +1,15 @@
 <html>
 <head>
-	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="studentStyle.css">
 	<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.16.0/js/md5.min.js"></script>
 
 </head>
 <body>
 
-
+<h1>Student webpage</h1>
 <table border="1" cellpadding="15" id="mytab1">
-    <tbody>
+    <tbody id="CellText">
         <tr>
             <td>Time</td>
             <td>Monday</td>
@@ -103,6 +103,26 @@
             <td>Colour</td>
         </tr>
         <tr>
+            <td contenteditable >CS210</td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable >CS130</td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable ></td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable ></td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable ></td>
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
             <td contenteditable ></td>
             <td onclick="setColour(this)"></td>
         </tr>
@@ -118,7 +138,6 @@
 
 
     const firebaseConfig = {
-        
     };
 
         
@@ -127,50 +146,79 @@
 
     var inputBox=document.getElementById("inputBox");
     var table=document.getElementById("mytab1");
-    var moduleColour = "black";
+    var userTable = document.getElementById("freeTime");
+    var moduleColour;
     var moduleCode;
     var slotType = "T";
     var r = document.querySelector(':root');
-    
 
-
-
-    window.readUserData = function (){
-        moduleCode = inputBox.rows[1].cells[0].innerHTML;
-        //r.style.setProperty('--moduleColour', (md5(moduleCode)).substring(1,7));
-        const db = getDatabase();
-        const dbRef = ref(db, moduleCode + '/');
-        onValue(dbRef, (snapshot) => {const data = snapshot.val();
-            const values = Object.entries(data);
-            cleanUserData(values);
-        });
-        
-    }
-
-    window.cleanUserData = function(values) {
-        var current;
-        var column;
-        var row;
-        var type;
-        for(let index = 0; index < values[0][1].length; index++){
-            current = values[0][1][index];
-            row = current.charAt(0);
-            column = current.charAt(2);
-            type = current.substring(4,6);
-            table.rows[row].cells[column].innerHTML = type;
-            table.rows[row].cells[column].classList.toggle("set");
-        }
-    }
 
     window.setColour = function(element) {
         var row_index = (element.closest('tr').rowIndex);
         moduleCode = inputBox.rows[row_index].cells[0].innerHTML;
         moduleColour = (md5(moduleCode)).substring(1,7);
-        r.style.setProperty('--moduleColour', moduleColour);
-        inputBox.rows[row_index].cells[1].classList.toggle("set");
-        readUserData();
-
+        inputBox.rows[row_index].cells[1].style.backgroundColor = moduleColour;
+        readUserData(row_index);
     }
+
+    window.readUserData = function (row_index){
+        const db = getDatabase();
+        const dbRef = ref(db, moduleCode + '/');
+        onValue(dbRef, (snapshot) => {const data = snapshot.val();
+            const values = Object.entries(data);
+            fillInTable(values);
+        });   
+    }
+
+    window.fillInTable = function(values) {
+        var current;
+        var column;
+        var row;
+        var type;
+        var currentCell;
+        
+        for(let index = 0; index < values[0][1].length; index++){
+            current = values[0][1][index];
+            row = current.charAt(0);
+            column = current.charAt(2);
+            type = current.substring(4,6);
+            currentCell = table.rows[row].cells[column];
+            
+            if(currentCell.innerHTML != "" && (rgba2hex(currentCell.style.backgroundColor)) != moduleColour){
+                handClash(currentCell, type, moduleColour);
+            } else if( currentCell.innerHTML == "" ) {
+                currentCell.innerHTML = type;
+                currentCell.style.fontFamily = "monospace";
+                currentCell.style.backgroundColor = moduleColour; 
+            }
+            
+        }
+    }
+
+    window.handClash = function(currentCell, type, moduleColour) {
+        var string = currentCell.innerHTML + "," + type;
+        currentCell.innerHTML = "";
+        var colours = (rgba2hex(currentCell.style.backgroundColor)) + "," + moduleColour;
+        currentCell.style.backgroundColor = "white";
+        let stringArray = string.split(",");
+        let colourArray = colours.split(",");
+
+        for(let index = 0; index < stringArray.length; index++){
+            let div = document.createElement("div");
+            div.setAttribute("id", colourArray[index]);
+            div.setAttribute("style", "background-color:" + colourArray[index] + ";");
+            div.innerHTML = stringArray[index] + " ";
+            currentCell.appendChild(div);
+        }
+    }
+
+
+
+
+
+    const rgba2hex = (rgba) => `${rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.{0,1}\d*))?\)$/).slice(1).map((n, i) => (i === 3 ? Math.round(parseFloat(n) * 255) : parseFloat(n)).toString(16).padStart(2, '0').replace('NaN', '')).join('')}`
+
+
 
 </script>
  
