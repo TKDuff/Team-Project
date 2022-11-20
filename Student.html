@@ -138,6 +138,7 @@
 
 
     const firebaseConfig = {
+
     };
 
         
@@ -149,7 +150,6 @@
     var userTable = document.getElementById("freeTime");
     var moduleColour;
     var moduleCode;
-    var slotType = "T";
     var r = document.querySelector(':root');
 
 
@@ -183,22 +183,25 @@
             column = current.charAt(2);
             type = current.substring(4,6);
             currentCell = table.rows[row].cells[column];
-            
-            if(currentCell.innerHTML != "" && (rgba2hex(currentCell.style.backgroundColor)) != moduleColour){
-                handClash(currentCell, type, moduleColour);
-            } else if( currentCell.innerHTML == "" ) {
+            if(currentCell.dataset.modules != null){
+                currentCell.setAttribute("data-modules", currentCell.dataset.modules + "," + moduleColour);
+                currentCell.setAttribute("data-types", currentCell.dataset.types + "," + type);
+                handleClash(currentCell);
+            } else {
                 currentCell.innerHTML = type;
                 currentCell.style.fontFamily = "monospace";
-                currentCell.style.backgroundColor = moduleColour; 
+                currentCell.style.backgroundColor = moduleColour;
+                currentCell.setAttribute("data-modules", moduleColour);
+                currentCell.setAttribute("data-types", type)
             }
-            
+                        
         }
     }
 
-    window.handClash = function(currentCell, type, moduleColour) {
-        var string = currentCell.innerHTML + "," + type;
+    window.handleClash = function(currentCell) {
+        var string = currentCell.dataset.types;
+        var colours = currentCell.dataset.modules;
         currentCell.innerHTML = "";
-        var colours = (rgba2hex(currentCell.style.backgroundColor)) + "," + moduleColour;
         currentCell.style.backgroundColor = "white";
         let stringArray = string.split(",");
         let colourArray = colours.split(",");
@@ -207,12 +210,16 @@
             let div = document.createElement("div");
             div.setAttribute("id", colourArray[index]);
             div.setAttribute("style", "background-color:" + colourArray[index] + ";");
+            //div.setAttribute("onclick", "removeOthers(this)")
             div.innerHTML = stringArray[index] + " ";
             currentCell.appendChild(div);
         }
     }
 
-
+    window.removeOthers = function(element) {
+        console.log(element.style.backgroundColor);
+        
+    }
 
 
 
