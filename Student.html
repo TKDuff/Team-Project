@@ -111,7 +111,7 @@
             <td onclick="setColour(this)"></td>
         </tr>
         <tr>
-            <td contenteditable ></td>
+            <td contenteditable >CS240</td>
             <td onclick="setColour(this)"></td>
         </tr>
         <tr>
@@ -193,6 +193,7 @@
                 currentCell.style.backgroundColor = moduleColour;
                 currentCell.setAttribute("data-modules", moduleColour);
                 currentCell.setAttribute("data-types", type)
+                currentCell.setAttribute("onclick", "removeOthers(this)")
             }
                         
         }
@@ -210,16 +211,78 @@
             let div = document.createElement("div");
             div.setAttribute("id", colourArray[index]);
             div.setAttribute("style", "background-color:" + colourArray[index] + ";");
-            //div.setAttribute("onclick", "removeOthers(this)")
+            div.setAttribute("onclick", "removeLabs(this)")
             div.innerHTML = stringArray[index] + " ";
             currentCell.appendChild(div);
         }
     }
 
-    window.removeOthers = function(element) {
-        console.log(element.style.backgroundColor);
+    
+    window.removeLabs = function(element) {
+        var colour = rgba2hex( element.style.backgroundColor);
+        var type = element.innerHTML;
+        //element.parentNode.style.backgroundColor = colour;
+        //element.parentNode.innerHTML = type;
+
         
+        switch(type)
+        {
+            case "T  ":
+                if(element.parentNode.dataset.types.includes("LA")){
+                    removeSecondLab(element.parentNode, "white", "");
+                }
+                element.parentNode.style.backgroundColor = colour;
+                element.parentNode.innerHTML = type;                
+                break;
+            case "LA ":
+                console.log("Lab");
+                if(element.parentNode.dataset.types.includes("LA")){
+                    removeSecondLab(element.parentNode, colour, type);
+                }
+                element.parentNode.style.backgroundColor = colour;
+                element.parentNode.innerHTML = type;
+                break;
+            default:
+                break;
+        }
     }
+
+    window.removeOthers = function(element) {
+        var currentCell;
+        var currentCellRowIndex = (element.closest('tr').rowIndex);
+        var currentCellColumnIndex = element.cellIndex;
+        for(let row_index = 1; row_index < 9; row_index++){
+            for(let cell_index = 1; cell_index < 5; cell_index++){
+                currentCell =table.rows[row_index].cells[cell_index];
+                var notContested = (element.style.backgroundColor == currentCell.style.backgroundColor) && (currentCellColumnIndex != cell_index) && (currentCellRowIndex != row_index) && (element.innerHTML == currentCell.innerHTML);
+                if(notContested){
+                    console.log("Clash at ", row_index, cell_index);
+                    currentCell.style.backgroundColor = "white";
+                    currentCell.innerHTML = "";
+                } else if (currentCell.style.backgroundColor == "white"){
+                    //console.log("White at ", row_index, cell_index);
+                }
+            }
+        }
+        console.log("\n");
+    }
+
+
+
+    window.removeSecondLab = function(tableCell, colour, type) {
+        var nextRow = tableCell.closest('tr').rowIndex;
+        var nextCell = table.rows[nextRow+1].cells[tableCell.cellIndex].dataset.modules;
+        var move;
+        if(nextCell != null ){  //if cell below is not empty, must remove labs from that cell
+            move = 1;
+        } else {                //else remove from above
+            move = -1;
+        }
+        console.log(move);
+        table.rows[nextRow+move].cells[tableCell.cellIndex].innerHTML = type;
+        table.rows[nextRow+move].cells[tableCell.cellIndex].style.backgroundColor = colour;
+    }
+
 
 
 
