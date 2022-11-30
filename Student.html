@@ -103,23 +103,23 @@
             <td>Colour</td>
         </tr>
         <tr>
-            <td contenteditable >CS320</td>
+            <td contenteditable >CS320</td> <!--CS11-->
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable >CS310</td> <!--CS22-->
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable >CS357</td> <!--CS44-->
+            <td onclick="setColour(this)"></td>
+        </tr>
+        <tr>
+            <td contenteditable >CS353</td> <!--CS33-->
             <td onclick="setColour(this)"></td>
         </tr>
         <tr>
             <td contenteditable >CS264</td>
-            <td onclick="setColour(this)"></td>
-        </tr>
-        <tr>
-            <td contenteditable >CS310</td>
-            <td onclick="setColour(this)"></td>
-        </tr>
-        <tr>
-            <td contenteditable >CS357</td>
-            <td onclick="setColour(this)"></td>
-        </tr>
-        <tr>
-            <td contenteditable >CS353</td>
             <td onclick="setColour(this)"></td>
         </tr>
         <tr>
@@ -138,7 +138,13 @@
 
 
     const firebaseConfig = {
-
+        apiKey: "AIzaSyBmjC21RiSxYlHmho23VCKT9Z2HzDPGDC8",
+        authDomain: "logingroup7.firebaseapp.com",
+        databaseURL: "https://logingroup7-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "logingroup7",
+        storageBucket: "logingroup7.appspot.com",
+        messagingSenderId: "495512311493",
+        appId: "1:495512311493:web:daee85bb870ab93c9782ac"
     };
 
         
@@ -199,6 +205,7 @@
                 currentCell.setAttribute("data-types", type)
                 currentCell.setAttribute("onclick", "arbitor(this)")
                 currentCell.setAttribute("data-duration", duration);
+                currentCell.setAttribute("data-ids", "");
             }
                         
         }
@@ -215,16 +222,20 @@
         let stringArray = string.split(",");
         let colourArray = colours.split(",");
         let durationArray = durations.split(",");
+        var id;
 
         for(let index = 0; index < stringArray.length; index++){
+            id = stringArray[index].replace(/\s/g, "") + row + "" + col + "" + colourArray[index];
             let div = document.createElement("div");
-            div.setAttribute("id", row + "" + col + "" + colourArray[index]);
+            div.setAttribute("id", id);
             div.setAttribute("data-duration", durationArray[index]);
             div.setAttribute("style", "background-color:" + colourArray[index] + ";");
+            currentCell.setAttribute("data-ids", currentCell.dataset.ids + "," + id);
             div.setAttribute("onclick", "arbitor(this)");
             div.innerHTML = stringArray[index] + " ";
             currentCell.appendChild(div);
         }
+
     }
 
     window.arbitor = function(element) {
@@ -247,11 +258,21 @@
 
     window.HandleTutorial = function(element, isClash)
     {
-        if(isClash && element.parentNode.dataset.types.includes("LA")){
+        var Type = element.innerHTML.replace(/\s/g, "");
+        var Color = element.style.backgroundColor;
+        var tableCell = isClash ? element.parentNode : element;
+
+        var row = tableCell.closest('tr').rowIndex;
+        var col = tableCell.cellIndex;
+
+        if(isClash && element.parentNode.dataset.types.includes("LA")){     //if inner tutorial also contains a lab
             removeClashingLab(element);
+            removeAllOtherTutorials(element, isClash, Type, Color, row, col);
         } else {
-            console.log("You clicked on a tutorial");
-        }
+            removeAllOtherTutorials(element, isClash, Type, Color, row, col);  
+        }   
+        
+
     }
 
     window.removeClashingLab = function(element){
@@ -259,19 +280,24 @@
         let types = element.parentNode.dataset.types.split(",");
         let durations = element.parentNode.dataset.duration.split(",");
         var add;
-        
+        var rowIndex;
+        var colIndex;
 
         for(let index = 0; index < colours.length; index++){
             add = (durations[index] == 0) ? 1 : -1;
             if( (colours[index] !== rgba2hex(element.style.backgroundColor) ) && (types[index] == "LA" ) )    //for all div that are not 
             {
-                
-                console.log( (element.parentNode.closest("tr").rowIndex+add) +"" + element.parentNode.cellIndex + colours[index] );
+                rowIndex = element.parentNode.closest("tr").rowIndex+add;
+                colIndex = element.parentNode.cellIndex;
+                //console.log( (element.parentNode.closest("tr").rowIndex+add) +"" + element.parentNode.cellIndex + colours[index] );
                 try{
-                    document.getElementById(((element.parentNode.closest("tr").rowIndex+add) +"" + element.parentNode.cellIndex + colours[index])).remove();
-                } catch (error)
+                    document.getElementById((types[index] + "" + rowIndex +"" + colIndex + colours[index])).remove();   //remove clashing lab cell above
+                } catch (error)     //if above lab is not clashing, just remove it outright
                 {
-                  console.log("nothing");  
+                  table.rows[rowIndex].cells[colIndex].style.backgroundColor = "white";
+                  table.rows[rowIndex].cells[colIndex].innerHTML = "";
+                  delete table.rows[rowIndex].cells[colIndex].dataset.modules;
+                  delete table.rows[rowIndex].cells[colIndex].dataset.types;
                 }
                 
                 
@@ -280,6 +306,32 @@
 
     }
     
+    window.removeAllOtherTutorials = function(element, isClash, checkType, checkColour, row, col)
+    {
+        var currentCell;
+        var id;
+        var mainTuto = row + "" + col;
+        for(let col_index = 1; col_index < 6; col_index++){
+            for(let row_index = 1; row_index < 10; row_index++){
+                currentCell = table.rows[row_index].cells[col_index]
+                id = checkType + "" + row_index + "" + col_index + rgba2hex(checkColour);
+                
+                var NotClashingCell = (checkColour == currentCell.style.backgroundColor) && (checkType == currentCell.innerHTML.replace(/\s/g, ""))
+                var clashingCell = (typeof currentCell.dataset.modules !== 'undefined') && (currentCell.dataset.ids.includes(id));
+                //console.log(id, clashingCell);
+
+                if(NotClashingCell && (row_index +""+col_index!==mainTuto)){ //hackish way to solve problem
+                    currentCell.style.backgroundColor = "white";
+                    currentCell.innerHTML = "";
+                } else if(clashingCell && (row_index +""+col_index!==mainTuto)){
+                    
+                    console.log(row_index, col_index);
+                    document.getElementById(checkType +"" + row_index + "" + col_index + rgba2hex(checkColour)).remove();       //could replace with id variable CHECK THIS
+                }
+            }
+        }
+    }  
+
     window.HandleLab = function(element, isClash) 
     {
         var colour = element.style.backgroundColor;
@@ -311,22 +363,26 @@
         var currentCell;
         var checkColour = element.style.backgroundColor;
         var checkType = element.innerHTML.replace(/\s/g, "");
-        var checker;
+        var id;
         var mainLab = row+""+col;
         var otherLab = (row+add)+""+col;
 
         for(let col_index = 1; col_index < 6; col_index++){
             for(let row_index = 1; row_index < 10; row_index++){
                 currentCell = table.rows[row_index].cells[col_index]
+                id = checkType + "" + row_index + "" + col_index + rgba2hex(checkColour);
+
                 var NotClashingCell = (checkColour == currentCell.style.backgroundColor) && (checkType == currentCell.innerHTML.replace(/\s/g, ""))
-                var clashingCell = (typeof currentCell.dataset.modules !== 'undefined') && (currentCell.dataset.modules.includes(rgba2hex(checkColour))) && (currentCell.dataset.types.includes(checkType));
+                var clashingCell = (typeof currentCell.dataset.modules !== 'undefined') && (currentCell.dataset.ids.includes(id));    //(typeof currentCell.dataset.modules !== 'undefined') && (currentCell.dataset.modules.includes(rgba2hex(checkColour))) && (currentCell.dataset.types.includes(checkType));
+
                 if(NotClashingCell && (row_index+""+col_index!==mainLab && row_index+""+col_index!==otherLab)){ //hackish way to solve problem
                     table.rows[row_index].cells[col_index].style.backgroundColor = "white";
                     table.rows[row_index].cells[col_index].innerHTML = "";
                 } else if(clashingCell){
-                    console.log(row_index, col_index);
                     currentCell.dataset.modules = currentCell.dataset.modules.replace(rgba2hex(checkColour), "");   //remove clashing colour and lab symbol
-                    document.getElementById( row_index + "" + col_index + rgba2hex(checkColour)).remove();
+                    currentCell.dataset.types = currentCell.dataset.types.replace(checkType, "");
+                    document.getElementById(id).remove();
+                    
                 }
                 }
             }
